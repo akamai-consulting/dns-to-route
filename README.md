@@ -4,7 +4,6 @@
 This is expected to run from an LKE-E with NAT Gateway for VPCs.
 
 ```
-DESIRED_ROUTE="www.example.com eth0 10.0.0.1"
 
 kubectl apply -f - <<EOF
 apiVersion: apps/v1
@@ -29,8 +28,12 @@ spec:
       - operator: "Exists"
       containers:
       - name: route-maintainer
-        image: customcontainer:latest
+        image: nathanles/dns-to-route-container:latest 
+        env:
+        - name: DESIRED_ROUTE
+          value: "www.example.com eth0 10.0.0.1"
         securityContext:
+          add: ["NET_ADMIN"]
           privileged: true
         command: ["/bin/sh", "-c"]
         args:
