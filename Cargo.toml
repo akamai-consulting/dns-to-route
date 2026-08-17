@@ -1,0 +1,12 @@
+[package]
+name = "dns-to-route"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+futures-util = "0.3.33"
+hickory-resolver = "0.26.1"
+ipnetwork = "0.21.1"
+netlink-packet-route = "0.30.0"
+rtnetlink = "0.21.0"
+tokio = { version = "1.53.1", features = ["full"] }
