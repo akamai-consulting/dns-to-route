@@ -67,7 +67,7 @@ Route for 172.66.147.243 added.```
 
 We did a DNS request on www.example.com and we recieved two IPv4 addresses back. We are going to add a route for each IP to use the eth0 interface and source from 172.236.110.200
 
-If one or all of the routes exist, we will skipp the step of adding the route:
+If one or all of the routes exist, we will skip the step of adding the route:
 ```
 #> ip route del 172.66.147.243 dev eth0 proto babel src 172.236.110.200
 #> dns-to-route www.example.com eth0 172.236.110.200
