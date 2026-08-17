@@ -140,7 +140,7 @@ async fn del_route(raddress: Ipv4Addr, route: RouteMessage, handle: Handle) {
         println!("Route for {:#?} deleted.", raddress);
     }
 }
-//Build the route payload and add it to the tabel
+//Build the route payload and add it to the table
 async fn add_route(
     dest: &Ipv4Network,
     iface_idx: u32,
