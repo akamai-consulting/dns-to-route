@@ -91,9 +91,3 @@ Route exists for 104.20.23.154
 Checking status of address: 172.66.147.243
 Route exists for 172.66.147.243
 ```
-
-Clone repo, cd into dns-to-route, then run:
-```
-cargo build --release
-```
-To compile.
