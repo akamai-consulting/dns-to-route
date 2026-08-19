@@ -6,8 +6,10 @@
 //
 //
 use std::{env, net::Ipv4Addr, net::IpAddr};
-use hickory_resolver::{Resolver};
-
+use hickory_resolver::{Resolver, lookup_ip::LookupIp};
+//use hickory_resolver::net::runtime::TokioRuntimeProvider;
+//use hickory_resolver::config::*;
+//use tokio::runtime::Runtime;
 use futures_util::TryStreamExt;
 use ipnetwork::Ipv4Network;
 use rtnetlink::{new_connection, Error, Handle, RouteMessageBuilder};
@@ -42,25 +44,13 @@ async fn main() -> Result<(), ()> {
     });
     //convert the inteface provided on the commandline from string to format to be used with
     //rtnetlink
-    let iface_idx = handle
-        .link()
-        .get()
-        .match_name(iface.into())
-        .execute()
-        .try_next()
-        .await
-        .unwrap()
-        .unwrap()
-        .header
-        .index;
 
     let source: Ipv4Addr = args[3].parse().unwrap_or_else(|_| {
         eprintln!("invalid source");
         std::process::exit(1);
     });
 
-    let resolver = Resolver::builder_tokio().unwrap().build().unwrap();
-    let response = resolver.lookup_ip(dnsname).await.unwrap();
+    let response = dns_lookup(dnsname).await;
     let mut run_once = true;
     let current_routes = RouteMessageBuilder::<Ipv4Addr>::new()
         .build();
@@ -71,6 +61,7 @@ async fn main() -> Result<(), ()> {
     //Test each address in the DNS response
     for address in response.iter() {
         //Only concerned about IPv4 (Plan to add IPv6 support if needed later)
+        let iface_idx =  create_interface(handle.clone(), iface.clone());
         if address.is_ipv4() {
             let mut ipv4address: Ipv4Addr = Ipv4Addr::new(0, 0, 0, 0);
             let mut routes = handle.route().get(current_routes.clone()).execute();
@@ -120,7 +111,7 @@ async fn main() -> Result<(), ()> {
                     eprintln!("invalid destination");
                     std::process::exit(1);
                 });
-                if let Err(e) = add_route(&dest, iface_idx, source, handle.clone(), address).await {
+                if let Err(e) = add_route(&dest, iface_idx.await, source, handle.clone(), address).await {
                     eprintln!("{e}");
                 };
             }
@@ -128,6 +119,35 @@ async fn main() -> Result<(), ()> {
         }
     }
     Ok(())
+}
+
+async fn dns_lookup(record: String) -> LookupIp {
+    //let io_loop = Runtime::new().unwrap();
+    //let resolver = Resolver::builder_with_config(
+    //    ResolverConfig::udp_and_tcp(&GOOGLE),
+    //    TokioRuntimeProvider::default()
+    //).build().unwrap();
+    let resolver = Resolver::builder_tokio().unwrap().build().unwrap();
+    let response = resolver.lookup_ip(record).await.unwrap();
+    //let lookup_future = resolver.lookup_ip(record);
+    //let response = io_loop.block_on(lookup_future).unwrap();
+    //let _address = response.iter().next().expect("no addresses returned!");
+    return response
+}
+
+async fn create_interface(handle: Handle, iface: String) -> u32 {
+    let iface_idx = handle
+        .link()
+        .get()
+        .match_name(iface.into())
+        .execute()
+        .try_next()
+        .await
+        .unwrap()
+        .unwrap()
+        .header
+        .index;
+    return iface_idx
 }
 //Unlike add_route, we have the route payload already from rtnetlink, so we just need to trigger
 //the delete
@@ -166,3 +186,58 @@ fn usage() {
         dns-to-route <DNS record to resolve> <interface> <source>"
     );
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::net::Ipv4Addr;
+    use netns_rs::NetNs;
+    use rtnetlink::{new_connection, RouteMessageBuilder, IpVersion};
+    use futures::stream::StreamExt;
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn test_routing_table_logic_in_sandbox() {
+        let ns_name = "rtnl_test_sandbox";
+        let test_ns = NetNs::new(ns_name).expect("Failed to create network namespace");
+
+        test_ns.run(|_| {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async {
+                let (connection, handle, _) = new_connection().unwrap();
+                tokio::spawn(connection);
+
+                let gateway: Ipv4Addr = "10.0.0.1".parse().unwrap();
+                let iface_idx =  create_interface(handle.clone(), String::from("eth0"));
+                let resolver = Resolver::builder_tokio().unwrap().build().unwrap();
+                let address = dns_lookup("www.example.com");
+                let dest: Ipv4Network = format!("{}/32", address.await.iter().next().unwrap()).parse().unwrap_or_else(|_| {
+                    eprintln!("invalid destination");
+                    std::process::exit(1);
+                });
+                add_route(&dest, iface_idx.await, gateway, handle.clone(), std::net::IpAddr::V4(gateway));
+                let iface_idx =  create_interface(handle.clone(), String::from("eth0"));
+                let test_route = RouteMessageBuilder::<Ipv4Addr>::new()
+                    .destination_prefix(dest.ip(), dest.prefix())
+                    .output_interface(iface_idx.await)
+                    .protocol(DNS_ROUTE)
+                    .pref_source(gateway)
+                    .build();
+
+
+                let mut routes = handle.route().get(test_route).execute();
+                let mut found_fake_route = false;
+
+                while let Some(Ok(route)) = routes.next().await {
+                    if let rt_msg = route.header {
+                         found_fake_route = true;
+                    }
+                }
+
+                assert!(found_fake_route, "Application failed to read back the injected route");
+            });
+        }).expect("Namespace runtime error");
+
+        test_ns.remove().ok();
+    }
+}
+
