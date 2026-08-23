@@ -135,17 +135,26 @@ async fn dns_lookup(record: String) -> LookupIp {
 }
 
 async fn create_interface(handle: Handle, iface: String) -> u32 {
-    handle
+    let iface_idx = handle
         .link()
         .get()
         .match_name(iface)
         .execute()
         .try_next()
-        .await
-        .unwrap()
-        .unwrap()
-        .header
-        .index
+        .await;
+
+    match iface_idx {
+        Ok(result) => {
+            result
+                .unwrap()
+                .header
+                .index
+        }
+        Err(err) => {
+            eprint!("ERROR: {}", err);
+            panic!();
+        }
+    }
 
 }
 //Unlike add_route, we have the route payload already from rtnetlink, so we just need to trigger
