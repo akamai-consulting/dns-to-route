@@ -128,26 +128,25 @@ async fn dns_lookup(record: String) -> LookupIp {
     //    TokioRuntimeProvider::default()
     //).build().unwrap();
     let resolver = Resolver::builder_tokio().unwrap().build().unwrap();
-    let response = resolver.lookup_ip(record).await.unwrap();
+    resolver.lookup_ip(record).await.unwrap()
     //let lookup_future = resolver.lookup_ip(record);
     //let response = io_loop.block_on(lookup_future).unwrap();
     //let _address = response.iter().next().expect("no addresses returned!");
-    return response
 }
 
 async fn create_interface(handle: Handle, iface: String) -> u32 {
-    let iface_idx = handle
+    handle
         .link()
         .get()
-        .match_name(iface.into())
+        .match_name(iface)
         .execute()
         .try_next()
         .await
         .unwrap()
         .unwrap()
         .header
-        .index;
-    return iface_idx
+        .index
+
 }
 //Unlike add_route, we have the route payload already from rtnetlink, so we just need to trigger
 //the delete
