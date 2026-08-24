@@ -65,7 +65,7 @@ No matching result exists. Adding DNS result 104.20.23.154 to the table.
 Route for 104.20.23.154 added.
 Checking status of address: 172.66.147.243
 No matching result exists. Adding DNS result 172.66.147.243 to the table.
-Route for 172.66.147.243 added.```
+Route for 172.66.147.243 added.
 ```
 
 We did a DNS request on www.example.com and we recieved two IPv4 addresses back. We are going to add a route for each IP to use the eth0 interface and source from 172.236.110.200
@@ -91,3 +91,10 @@ Route exists for 104.20.23.154
 Checking status of address: 172.66.147.243
 Route exists for 172.66.147.243
 ```
+
+## Steps to install:
+1. Clone the repo
+2. Build the container with the included Dockerfile
+3. Deploy it to the registry of your choice
+4. Apply the manifest example in the README here updated for the container location, the interval (30 seconds in the example), and interface and source IP for the NAT.
+
