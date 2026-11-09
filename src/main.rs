@@ -27,7 +27,7 @@ async fn main() -> Result<(), ()> {
     //inteface to use for the route
     //source to use for the route
     let args: Vec<String> = env::args().collect();
-    if args.len() != 4 {
+    if args.len() != 3 {
         println!("Argument count: {}", args.len());
         usage();
         return Ok(());
@@ -40,13 +40,6 @@ async fn main() -> Result<(), ()> {
 
     let iface: String = args[2].parse().unwrap_or_else(|_| {
         eprintln!("invalid interface");
-        std::process::exit(1);
-    });
-    //convert the inteface provided on the commandline from string to format to be used with
-    //rtnetlink
-
-    let source: Ipv4Addr = args[3].parse().unwrap_or_else(|_| {
-        eprintln!("invalid source");
         std::process::exit(1);
     });
 
@@ -111,7 +104,6 @@ async fn main() -> Result<(), ()> {
                     eprintln!("invalid destination");
                     std::process::exit(1);
                 });
-                //if let Err(e) = add_route(&dest, iface_idx.await, source, handle.clone(), address).await {
                 if let Err(e) = add_route(&dest, iface_idx.await, handle.clone(), address).await {
                     eprintln!("{e}");
                 };
@@ -123,16 +115,8 @@ async fn main() -> Result<(), ()> {
 }
 
 async fn dns_lookup(record: String) -> LookupIp {
-    //let io_loop = Runtime::new().unwrap();
-    //let resolver = Resolver::builder_with_config(
-    //    ResolverConfig::udp_and_tcp(&GOOGLE),
-    //    TokioRuntimeProvider::default()
-    //).build().unwrap();
     let resolver = Resolver::builder_tokio().unwrap().build().unwrap();
     resolver.lookup_ip(record).await.unwrap()
-    //let lookup_future = resolver.lookup_ip(record);
-    //let response = io_loop.block_on(lookup_future).unwrap();
-    //let _address = response.iter().next().expect("no addresses returned!");
 }
 
 async fn create_interface(handle: Handle, iface: String) -> u32 {
@@ -173,7 +157,6 @@ async fn del_route(raddress: Ipv4Addr, route: RouteMessage, handle: Handle) {
 async fn add_route(
     dest: &Ipv4Network,
     iface_idx: u32,
-    //source: Ipv4Addr,
     handle: Handle,
     address: IpAddr,
 ) -> Result<(), Error> {
@@ -182,7 +165,6 @@ async fn add_route(
         .destination_prefix(dest.ip(), dest.prefix())
         .output_interface(iface_idx)
         .protocol(DNS_ROUTE)
-        //.pref_source(source)
         .build();
     handle.route().add(route).execute().await?;
     println!("Route for {} added.", address);
@@ -215,7 +197,6 @@ mod tests {
                 let (connection, handle, _) = new_connection().unwrap();
                 tokio::spawn(connection);
 
-                let gateway: Ipv4Addr = "10.0.0.1".parse().unwrap();
                 let iface_idx =  create_interface(handle.clone(), String::from("eth0"));
                 let resolver = Resolver::builder_tokio().unwrap().build().unwrap();
                 let address = dns_lookup("www.example.com".to_string());
@@ -223,7 +204,7 @@ mod tests {
                     eprintln!("invalid destination");
                     std::process::exit(1);
                 });
-                add_route(&dest, iface_idx.await, gateway, handle.clone(), std::net::IpAddr::V4(gateway));
+                add_route(&dest, iface_idx.await, handle.clone(), std::net::IpAddr::V4(gateway));
                 let iface_idx =  create_interface(handle.clone(), String::from("eth0"));
                 let test_route = RouteMessageBuilder::<Ipv4Addr>::new()
                     .destination_prefix(dest.ip(), dest.prefix())

@@ -31,7 +31,7 @@ spec:
         image: nathanles/dns-to-route-container:latest 
         env:
         - name: DESIRED_ROUTE
-          value: "www.example.com eth0 10.0.0.1"
+          value: "www.example.com eth0"
         securityContext:
           add: ["NET_ADMIN"]
           privileged: true
@@ -40,7 +40,7 @@ spec:
           - |
             echo "Starting loop for $DESIRED_ROUTE..."
             while true; do
-              dns-to-route $DESIRED_ROUTE
+              /app/dns-to-route $DESIRED_ROUTE
               sleep 30
             done
         resources:
