@@ -96,5 +96,5 @@ Route exists for 172.66.147.243
 1. Clone the repo
 2. Build the container with the included Dockerfile
 3. Deploy it to the registry of your choice
-4. Apply the manifest example in the README here updated for the container location, the interval (30 seconds in the example), and interface and source IP for the NAT.
+4. Apply the manifest example in the README here updated for the container location, the interval (30 seconds in the example), and interface.
 
