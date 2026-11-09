@@ -112,7 +112,7 @@ async fn main() -> Result<(), ()> {
                     std::process::exit(1);
                 });
                 //if let Err(e) = add_route(&dest, iface_idx.await, source, handle.clone(), address).await {
-                if let Err(e) = add_route(iface_idx.await, source, handle.clone(), address).await {
+                if let Err(e) = add_route(&dest, iface_idx.await, handle.clone(), address).await {
                     eprintln!("{e}");
                 };
             }
@@ -171,18 +171,18 @@ async fn del_route(raddress: Ipv4Addr, route: RouteMessage, handle: Handle) {
 }
 //Build the route payload and add it to the table
 async fn add_route(
-    //dest: &Ipv4Network,
+    dest: &Ipv4Network,
     iface_idx: u32,
-    source: Ipv4Addr,
+    //source: Ipv4Addr,
     handle: Handle,
     address: IpAddr,
 ) -> Result<(), Error> {
 
     let route = RouteMessageBuilder::<Ipv4Addr>::new()
-        //.destination_prefix(dest.ip(), dest.prefix())
+        .destination_prefix(dest.ip(), dest.prefix())
         .output_interface(iface_idx)
         .protocol(DNS_ROUTE)
-        .pref_source(source)
+        //.pref_source(source)
         .build();
     handle.route().add(route).execute().await?;
     println!("Route for {} added.", address);
