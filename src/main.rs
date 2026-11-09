@@ -111,7 +111,8 @@ async fn main() -> Result<(), ()> {
                     eprintln!("invalid destination");
                     std::process::exit(1);
                 });
-                if let Err(e) = add_route(&dest, iface_idx.await, source, handle.clone(), address).await {
+                //if let Err(e) = add_route(&dest, iface_idx.await, source, handle.clone(), address).await {
+                if let Err(e) = add_route(iface_idx.await, source, handle.clone(), address).await {
                     eprintln!("{e}");
                 };
             }
@@ -170,7 +171,7 @@ async fn del_route(raddress: Ipv4Addr, route: RouteMessage, handle: Handle) {
 }
 //Build the route payload and add it to the table
 async fn add_route(
-    dest: &Ipv4Network,
+    //dest: &Ipv4Network,
     iface_idx: u32,
     source: Ipv4Addr,
     handle: Handle,
@@ -178,7 +179,7 @@ async fn add_route(
 ) -> Result<(), Error> {
 
     let route = RouteMessageBuilder::<Ipv4Addr>::new()
-        .destination_prefix(dest.ip(), dest.prefix())
+        //.destination_prefix(dest.ip(), dest.prefix())
         .output_interface(iface_idx)
         .protocol(DNS_ROUTE)
         .pref_source(source)
@@ -217,7 +218,7 @@ mod tests {
                 let gateway: Ipv4Addr = "10.0.0.1".parse().unwrap();
                 let iface_idx =  create_interface(handle.clone(), String::from("eth0"));
                 let resolver = Resolver::builder_tokio().unwrap().build().unwrap();
-                let address = dns_lookup("www.example.com");
+                let address = dns_lookup("www.example.com".to_string());
                 let dest: Ipv4Network = format!("{}/32", address.await.iter().next().unwrap()).parse().unwrap_or_else(|_| {
                     eprintln!("invalid destination");
                     std::process::exit(1);
