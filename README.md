@@ -54,7 +54,7 @@ EOF
 Command syntax:
 ```
 usage:
-        dns-to-route <DNS record to resolve> <interface> <source>
+        dns-to-route <DNS record to resolve> <interface>
 ```
 
 Example:
