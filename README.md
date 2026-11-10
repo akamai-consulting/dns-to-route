@@ -93,8 +93,12 @@ Route exists for 172.66.147.243
 ```
 
 ## Steps to install:
-1. Clone the repo
-2. Build the container with the included Dockerfile
-3. Deploy it to the registry of your choice
-4. Apply the manifest example in the README here updated for the container location, the interval (30 seconds in the example), and interface.
+ 
+1. Install Rust `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+or
+Use [precompiled binary for amd64](https://github.com/akamai-consulting/dns-to-route/releases/download/dns-to-route-v2.1/dns-to-route)
+2. Clone the repo
+3. Build the container with the included Dockerfile
+4. Deploy it to the registry of your choice
+5. Apply the manifest example in the README here updated for the container location, the interval (30 seconds in the example), and interface.
 
