@@ -98,7 +98,7 @@ Compiling from source:
 2. Clone the repo
 3. Build the container with the included Dockerfile
 4. Deploy it to the registry of your choice
-5. Apply the manifest example in the README here updated for the container location, the interval (30 seconds in the example), and interface.
+5. Apply the manifest example in the README here updated for the container location, the interval (30 seconds in the example), and interface
 
 Using Precompiled amd64 Binary:
 1. Clone the repo
@@ -107,5 +107,5 @@ Using Precompiled amd64 Binary:
 4. Remove stage 1 and 2 from `Dockerfile`
 5. Build container
 6. Deploy it to the registry of your choice
-7. Apply the manifest example in the README here updated for the container location, the interval (30 seconds in the example), and interface.
+7. Apply the manifest example in the README here updated for the container location, the interval (30 seconds in the example), and interface
 
